@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 
 use crate::config::discovery::DiscoveryResult;
 use crate::config::error::ConfigError;
-use crate::config::types::{Config, RawConfig, RawSource, Source};
+use crate::config::types::{Config, RawConfig, RawRendererDef, RawSource, Source};
 
 /// Config loaded from a single file (for config commands).
 ///
@@ -23,6 +23,8 @@ pub struct SingleFileConfig {
     pub sources: Vec<Source>,
     /// Key binding overrides declared in this file.
     pub keys: Option<HashMap<String, Vec<String>>>,
+    /// Renderer presets declared in this file.
+    pub renderers: Vec<RawRendererDef>,
 }
 
 /// Expand tilde in path to home directory.
@@ -98,6 +100,7 @@ pub fn load_single_file(path: &Path) -> Result<SingleFileConfig, ConfigError> {
         name: raw.name,
         sources: validate_sources(raw.sources),
         keys: raw.keys,
+        renderers: raw.renderers,
     })
 }
 
@@ -118,6 +121,10 @@ pub fn load(discovery: &DiscoveryResult) -> Result<Config, ConfigError> {
         config.global_sources = validate_sources(raw.sources);
         config.update_check = raw.update_check;
         config.keys = raw.keys;
+        // Renderer presets are declarative config like keys and the theme, so a
+        // global preset (e.g. a log format used from anywhere) has to load here
+        // too; project presets shadow them by name below.
+        config.renderers = raw.renderers;
         theme_raw = raw.theme;
         // Note: global name is ignored, project name takes precedence
     }
@@ -127,7 +134,7 @@ pub fn load(discovery: &DiscoveryResult) -> Result<Config, ConfigError> {
         let raw = load_file(project_path)?;
         config.name = raw.name;
         config.project_sources = validate_sources(raw.sources);
-        config.renderers = raw.renderers;
+        config.renderers = merge_renderers(std::mem::take(&mut config.renderers), raw.renderers);
         // Project key bindings override the global ones when present.
         if raw.keys.is_some() {
             config.keys = raw.keys;
@@ -143,6 +150,23 @@ pub fn load(discovery: &DiscoveryResult) -> Result<Config, ConfigError> {
     config.theme = crate::theme::loader::resolve_theme(&theme_raw, &themes_dirs)?;
 
     Ok(config)
+}
+
+/// Merge global and project renderer presets.
+///
+/// A project preset shadows a global one with the same name (the same
+/// "closest wins" rule the keys and the theme follow), and project presets stay
+/// first so `PresetRegistry::get_by_name` resolves the project definition.
+fn merge_renderers(global: Vec<RawRendererDef>, project: Vec<RawRendererDef>) -> Vec<RawRendererDef> {
+    if project.is_empty() || global.is_empty() {
+        return if project.is_empty() { global } else { project };
+    }
+
+    let shadowed: std::collections::HashSet<String> =
+        project.iter().map(|r| r.name.clone()).collect();
+    let mut merged = project;
+    merged.extend(global.into_iter().filter(|r| !shadowed.contains(&r.name)));
+    merged
 }
 
 #[cfg(test)]

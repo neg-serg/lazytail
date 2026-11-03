@@ -70,6 +70,19 @@ pub fn validate() -> Result<(), i32> {
                     }
                 }
             }
+            // Compile the renderer presets: a bad regex, an unknown style or a
+            // layout entry that sets both `width` and `max_width` is a config
+            // error the TUI would otherwise only print at startup.
+            if !cfg.renderers.is_empty() {
+                let (_, errors) = crate::renderer::PresetRegistry::compile_from_config(
+                    &cfg.renderers,
+                    config_path.parent(),
+                );
+                for err in errors {
+                    eprintln!("error: renderers: {err}");
+                    has_errors = true;
+                }
+            }
             if has_errors {
                 Err(1)
             } else {
@@ -132,6 +145,17 @@ fn show_config(cfg: &config::SingleFileConfig) {
         println!("{}: {}", "name".cyan(), name.green());
     } else {
         println!("{}: {}", "name".cyan(), "(not set)".dimmed());
+    }
+
+    // Renderer presets
+    if !cfg.renderers.is_empty() {
+        println!();
+        println!("{}:", "renderers".cyan());
+        let mut names: Vec<&str> = cfg.renderers.iter().map(|r| r.name.as_str()).collect();
+        names.sort_unstable();
+        for name in names {
+            println!("  {}", name.green());
+        }
     }
 
     // Key binding overrides
