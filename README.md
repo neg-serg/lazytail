@@ -239,7 +239,7 @@ Commands:
   help              Print help for a command
 
 Options:
-  -n, --name <NAME>        Capture stdin to ~/.config/lazytail/data/<NAME>.log
+  -n, --name <NAME>        Capture stdin to a named source (.lazytail/data or global)
       --raw                Output raw lines without rendering (only with -n)
       --no-watch           Disable file watching
       --mcp                Run as MCP server for AI assistants

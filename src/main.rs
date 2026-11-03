@@ -64,7 +64,8 @@ EXAMPLES:
     lazytail                            Discover sources from ~/.config/lazytail/data/
 
 CAPTURE MODE:
-    cmd | lazytail -n \"API\"             Capture stdin to ~/.config/lazytail/data/API.log
+    cmd | lazytail -n \"API\"             Capture stdin to a named source: .lazytail/data/
+                                        in a project, ~/.config/lazytail/data/ otherwise
                                         (tee-like: writes to file AND echoes to stdout)
 
     Then in another terminal:
@@ -85,8 +86,10 @@ struct Cli {
 
     /// Capture stdin to a named source file (tee-like behavior)
     ///
-    /// Writes stdin to ~/.config/lazytail/data/<NAME>.log while echoing to stdout.
-    /// The source can then be viewed with 'lazytail' (discovery mode).
+    /// Writes stdin to `.lazytail/data/<NAME>.log` inside a project
+    /// (`lazytail.yaml` found), or to `~/.config/lazytail/data/<NAME>.log`
+    /// otherwise, while echoing to stdout. The source can then be viewed with
+    /// 'lazytail' (discovery mode).
     #[arg(short = 'n', long = "name", value_name = "NAME")]
     name: Option<String>,
 
