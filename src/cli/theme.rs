@@ -688,7 +688,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp files and dirs
     fn test_import_creates_file() {
         let temp = tempfile::TempDir::new().unwrap();
         let json_path = temp.path().join("Dracula.json");

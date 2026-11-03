@@ -91,7 +91,6 @@ mod tests {
     use tempfile::TempDir;
 
     #[test]
-    #[ignore] // Slow test - involves file system operations
     fn test_directory_watcher_detects_new_file() {
         let temp = TempDir::new().unwrap();
         let watcher = DirectoryWatcher::new(temp.path()).unwrap();
@@ -111,7 +110,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow test - involves file system operations
     fn test_directory_watcher_ignores_non_log_files() {
         let temp = TempDir::new().unwrap();
         let watcher = DirectoryWatcher::new(temp.path()).unwrap();

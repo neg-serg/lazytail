@@ -21,10 +21,12 @@ impl std::fmt::Display for QueryParseError {
 /// Parse text query into FilterQuery AST.
 ///
 /// # Examples
-/// ```ignore
-/// parse_query("json | level == \"error\"")
-/// parse_query("json | status >= 400 | service =~ \"api.*\"")
-/// parse_query("logfmt | level == error")
+/// ```
+/// use lazytail::filter::query::parse_query;
+///
+/// assert!(parse_query("json | level == \"error\"").is_ok());
+/// assert!(parse_query("json | status >= 400 | service =~ \"api.*\"").is_ok());
+/// assert!(parse_query("logfmt | level == error").is_ok());
 /// ```
 pub fn parse_query(input: &str) -> Result<FilterQuery, QueryParseError> {
     QueryTextParser::new(input).parse()

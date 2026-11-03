@@ -1008,7 +1008,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp files
     fn test_run_trials_fast_finds_matches() {
         let dir = tempfile::tempdir().unwrap();
         let file = dir.path().join("test.log");
@@ -1026,7 +1025,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp files
     fn test_run_trials_fast_no_matches() {
         let dir = tempfile::tempdir().unwrap();
         let file = dir.path().join("test.log");
@@ -1038,7 +1036,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp files
     fn test_run_plain_text_shows_both_paths() {
         let dir = tempfile::tempdir().unwrap();
         let file = dir.path().join("test.log");
@@ -1060,7 +1057,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp files
     fn test_run_regex_no_paths_compare() {
         let dir = tempfile::tempdir().unwrap();
         let file = dir.path().join("test.log");
@@ -1081,7 +1077,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp files
     fn test_run_trials_fast_matches_run_trials() {
         let dir = tempfile::tempdir().unwrap();
         let file = dir.path().join("test.log");

@@ -392,7 +392,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_resolve_external_theme_file() {
         let temp = TempDir::new().unwrap();
         fs::write(
@@ -412,7 +411,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_resolve_external_with_base_dark() {
         let temp = TempDir::new().unwrap();
         fs::write(
@@ -431,7 +429,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_resolve_external_with_base_external() {
         let temp = TempDir::new().unwrap();
         // parent.yaml defines red
@@ -458,7 +455,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_resolve_external_cycle_detection() {
         let temp = TempDir::new().unwrap();
         fs::write(temp.path().join("a.yaml"), "base: b\n").unwrap();
@@ -474,7 +470,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_resolve_unknown_name_includes_external_themes() {
         let temp = TempDir::new().unwrap();
         fs::write(
@@ -493,7 +488,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_discover_themes_finds_yaml_files() {
         let temp = TempDir::new().unwrap();
         fs::write(temp.path().join("monokai.yaml"), "base: dark\n").unwrap();
@@ -512,7 +506,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory
     fn test_collect_themes_dirs() {
         let temp = TempDir::new().unwrap();
         let themes_dir = temp.path().join(".lazytail").join("themes");

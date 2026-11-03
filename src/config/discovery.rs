@@ -126,7 +126,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and changes cwd
     fn test_finds_config_in_current_dir() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join(PROJECT_CONFIG_NAME);
@@ -149,7 +148,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates nested temp directories and changes cwd
     fn test_finds_config_in_parent_dir() {
         let temp = TempDir::new().unwrap();
         let subdir = temp.path().join("subdir");
@@ -174,7 +172,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and changes cwd
     fn test_no_config_returns_defaults() {
         let temp = TempDir::new().unwrap();
         // Don't create any config file
@@ -187,7 +184,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and changes cwd
     fn test_data_dir_derived_from_project_root() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join(PROJECT_CONFIG_NAME);
@@ -241,7 +237,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates nested temp directories and changes cwd
     fn test_walk_stops_at_root() {
         let temp = TempDir::new().unwrap();
         // Don't create any config file - walk should go to root and stop
@@ -267,7 +262,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directories, checks global config detection
     fn test_global_config_detection() {
         // This test verifies the global config detection logic works
         // by checking that when a global config exists, it's found.
@@ -288,7 +282,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates nested temp directories and changes cwd
     fn test_verbose_returns_searched_paths() {
         let temp = TempDir::new().unwrap();
         let subdir = temp.path().join("level1").join("level2");

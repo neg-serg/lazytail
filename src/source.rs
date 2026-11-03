@@ -677,7 +677,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow test - requires temp dir setup
     fn test_ensure_directories() {
         with_temp_config(|_| {
             ensure_directories().unwrap();
@@ -691,7 +690,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow test - requires temp dir setup
     fn test_marker_creation_and_removal() {
         with_temp_config(|_| {
             ensure_directories().unwrap();
@@ -720,7 +718,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow test - requires temp dir setup
     fn test_discover_sources() {
         with_temp_config(|_| {
             ensure_directories().unwrap();
@@ -757,7 +754,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow test - requires temp dir setup
     fn test_create_secure_dir() {
         let temp = TempDir::new().unwrap();
         let secure_path = temp.path().join("secure_dir");
@@ -779,7 +775,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow test - requires temp dir setup
     fn test_create_secure_dir_recursive() {
         let temp = TempDir::new().unwrap();
         let nested_path = temp.path().join("level1").join("level2").join("level3");
@@ -855,7 +850,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow test - requires temp dir setup
     fn test_ensure_directories_for_context_project() {
         let temp = TempDir::new().unwrap();
         let project_root = temp.path().to_path_buf();
@@ -889,7 +883,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow test - requires temp dir setup
     fn test_marker_for_context() {
         let temp = TempDir::new().unwrap();
         let project_root = temp.path().to_path_buf();
@@ -912,7 +905,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow test - requires temp dir setup
     fn test_stale_marker_cleaned_on_create() {
         let temp = TempDir::new().unwrap();
         let project_root = temp.path().to_path_buf();
@@ -939,7 +931,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow test - requires temp dir setup
     fn test_discover_sources_for_context_project_before_global() {
         let _lock = HOME_MUTEX.lock().unwrap();
         let temp = TempDir::new().unwrap();
@@ -988,7 +979,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow test - requires temp dir setup
     fn test_discover_sources_for_context_project_shadows_global() {
         let _lock = HOME_MUTEX.lock().unwrap();
         let temp = TempDir::new().unwrap();
@@ -1033,7 +1023,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow test - requires temp dir setup
     fn test_discover_sources_for_context_empty_project_dir() {
         let _lock = HOME_MUTEX.lock().unwrap();
         let temp = TempDir::new().unwrap();

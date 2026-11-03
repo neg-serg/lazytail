@@ -191,10 +191,14 @@ impl IndexReader {
     /// and return only the line numbers that match the given bitmask pattern.
     /// For example, to find all JSON ERROR lines:
     ///
-    /// ```ignore
+    /// ```no_run
+    /// use lazytail::index::flags::{FLAG_FORMAT_JSON, SEVERITY_ERROR, SEVERITY_MASK};
+    /// use lazytail::index::reader::IndexReader;
+    ///
+    /// let reader = IndexReader::open(std::path::Path::new("/var/log/app.log")).unwrap();
     /// let mask = SEVERITY_MASK | FLAG_FORMAT_JSON;
     /// let want = SEVERITY_ERROR | FLAG_FORMAT_JSON;
-    /// let candidates = reader.scan_flags(mask, want, total_lines);
+    /// let candidates = reader.scan_flags(mask, want, 10_000);
     /// ```
     pub fn scan_flags(&self, mask: u32, want: u32, limit: usize) -> Vec<usize> {
         let count = self.flags.len().min(limit);

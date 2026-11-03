@@ -416,7 +416,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_collect_renderers_dirs_project_scoped() {
         let temp = tempfile::TempDir::new().unwrap();
         let renderers_dir = temp.path().join(".lazytail").join("renderers");
@@ -427,7 +426,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_collect_renderers_dirs_repo_bundled() {
         let temp = tempfile::TempDir::new().unwrap();
         let renderers_dir = temp.path().join("renderers");
@@ -438,7 +436,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_collect_renderers_dirs_priority() {
         let temp = tempfile::TempDir::new().unwrap();
         let project_dir = temp.path().join(".lazytail").join("renderers");
@@ -453,7 +450,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_load_external_presets() {
         let temp = tempfile::TempDir::new().unwrap();
         let dir = temp.path().join("renderers");
@@ -479,7 +475,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_inline_shadows_external() {
         use crate::config::types::{RawDetectDef, RawLayoutEntryDef, RawRendererDef};
 
@@ -531,7 +526,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_compile_from_config_with_external() {
         let temp = tempfile::TempDir::new().unwrap();
         let dir = temp.path().join(".lazytail").join("renderers");

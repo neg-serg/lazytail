@@ -1118,7 +1118,6 @@ mod tests {
         Ok(())
     }
 
-    #[test]
     /// Regression test: capture appends to existing file but builds index
     /// from offset 0. The TUI's refresh should reject these broken offsets.
     #[test]
@@ -1233,6 +1232,7 @@ mod tests {
         Ok(())
     }
 
+    #[test]
     fn test_stale_index_rejected_on_file_replacement() -> Result<()> {
         use crate::index::builder::IndexBuilder;
         use crate::source::index_dir_for_log;

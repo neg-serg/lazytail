@@ -218,7 +218,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory
     fn test_load_empty_discovery() {
         // No config files exist
         let discovery = DiscoveryResult::default();
@@ -231,7 +230,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_load_project_config() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join("lazytail.yaml");
@@ -276,7 +274,6 @@ sources:
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_load_minimal_config() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join("lazytail.yaml");
@@ -297,7 +294,6 @@ sources:
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_load_empty_yaml() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join("lazytail.yaml");
@@ -319,7 +315,6 @@ sources:
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_load_unknown_field_error() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join("lazytail.yaml");
@@ -357,7 +352,6 @@ sources: []
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_load_both_configs() {
         let temp = TempDir::new().unwrap();
         let project_config_path = temp.path().join("lazytail.yaml");
@@ -409,7 +403,6 @@ sources:
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_source_existence_check() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join("lazytail.yaml");
@@ -453,7 +446,6 @@ sources:
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory
     fn test_load_missing_file() {
         let temp = TempDir::new().unwrap();
         let nonexistent = temp.path().join("nonexistent.yaml");
@@ -476,7 +468,6 @@ sources:
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_load_config_with_renderers() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join("lazytail.yaml");
@@ -518,7 +509,6 @@ sources: []
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_load_source_optional_path() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join("lazytail.yaml");
@@ -553,7 +543,6 @@ sources:
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_load_source_with_renderers() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join("lazytail.yaml");
@@ -589,7 +578,6 @@ sources:
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_load_unknown_renderer_field_error() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join("lazytail.yaml");
@@ -622,7 +610,6 @@ renderers:
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_invalid_yaml_syntax() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join("lazytail.yaml");
@@ -646,7 +633,6 @@ renderers:
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_load_config_with_style_map_and_max_width() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join("lazytail.yaml");
@@ -691,7 +677,6 @@ renderers:
     }
 
     #[test]
-    #[ignore] // Slow: creates temp directory and files
     fn test_load_config_with_style_when() {
         let temp = TempDir::new().unwrap();
         let config_path = temp.path().join("lazytail.yaml");
