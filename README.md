@@ -291,13 +291,14 @@ wins over the global one, and unknown action names are rejected at startup
 
 ```yaml
 keys:
-  follow: ["f", "F"]      # tail -f / less style
-  page_down: ["ctrl+d"]   # half-page instead of a full screen
-  close_tab: []           # unbind `x` entirely
+  follow: ["f", "F"]         # tail -f / less style
+  half_page_down: ["ctrl+d"] # half a screen, as in vim
+  close_tab: []              # unbind `x` entirely
 ```
 
 Rebindable actions: `quit`, `scroll_down`, `scroll_up`, `viewport_down`,
-`viewport_up`, `page_down`, `page_up`, `jump_start`, `jump_end`, `follow`,
+`viewport_up`, `page_down`, `page_up`, `half_page_down`, `half_page_up`,
+`jump_start`, `jump_end`, `follow`,
 `filter`, `line_jump`, `help`, `z_mode`, `toggle_line`, `collapse_all`, `raw`,
 `timestamps`, `wrap`, `copy_line`, `close_tab`, `refresh`, `clear_filter`,
 `source_panel`, `tab_1` … `tab_9`, `z_center`/`z_top`/`z_bottom`/`z_cancel`

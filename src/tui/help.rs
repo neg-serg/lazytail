@@ -113,6 +113,12 @@ pub(super) fn render_help_overlay(
         row_multi(
             keymap,
             BindMode::Normal,
+            &[Action::HalfPageDown, Action::HalfPageUp],
+            "Scroll by half page",
+        ),
+        row_multi(
+            keymap,
+            BindMode::Normal,
             &[Action::ViewportDown, Action::ViewportUp],
             "Scroll viewport (vim-style)",
         ),
