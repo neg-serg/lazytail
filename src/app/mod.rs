@@ -174,6 +174,9 @@ pub struct App {
 
     /// Warning popup — shown as overlay, dismissed on any key
     pub warning_popup: Option<String>,
+
+    /// Configurable key bindings (defaults from `keymap::DEFAULT_BINDINGS`)
+    pub keymap: crate::keymap::Keymap,
 }
 
 impl App {
@@ -215,6 +218,7 @@ impl App {
             theme: crate::theme::Theme::dark(),
             source_renderer_map: HashMap::new(),
             warning_popup: None,
+            keymap: crate::keymap::Keymap::default(),
         }
     }
 

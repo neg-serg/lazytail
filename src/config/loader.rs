@@ -2,6 +2,7 @@
 //!
 //! Loads and validates YAML config files with path expansion.
 
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -20,6 +21,8 @@ pub struct SingleFileConfig {
     pub name: Option<String>,
     /// List of log sources from this config file.
     pub sources: Vec<Source>,
+    /// Key binding overrides declared in this file.
+    pub keys: Option<HashMap<String, Vec<String>>>,
 }
 
 /// Expand tilde in path to home directory.
@@ -94,6 +97,7 @@ pub fn load_single_file(path: &Path) -> Result<SingleFileConfig, ConfigError> {
     Ok(SingleFileConfig {
         name: raw.name,
         sources: validate_sources(raw.sources),
+        keys: raw.keys,
     })
 }
 
@@ -113,6 +117,7 @@ pub fn load(discovery: &DiscoveryResult) -> Result<Config, ConfigError> {
         let raw = load_file(global_path)?;
         config.global_sources = validate_sources(raw.sources);
         config.update_check = raw.update_check;
+        config.keys = raw.keys;
         theme_raw = raw.theme;
         // Note: global name is ignored, project name takes precedence
     }
@@ -123,6 +128,10 @@ pub fn load(discovery: &DiscoveryResult) -> Result<Config, ConfigError> {
         config.name = raw.name;
         config.project_sources = validate_sources(raw.sources);
         config.renderers = raw.renderers;
+        // Project key bindings override the global ones when present.
+        if raw.keys.is_some() {
+            config.keys = raw.keys;
+        }
         // Project theme overrides global theme (full override, not merge)
         if raw.theme.is_some() {
             theme_raw = raw.theme;

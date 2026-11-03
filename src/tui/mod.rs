@@ -73,7 +73,7 @@ pub fn render(f: &mut Frame, app: &mut App) -> Result<()> {
 
     // Render help overlay on top of everything if active
     if let Some(scroll_offset) = app.help_scroll_offset {
-        help::render_help_overlay(f, f.area(), scroll_offset, &app.theme.ui);
+        help::render_help_overlay(f, f.area(), scroll_offset, &app.theme.ui, &app.keymap);
     }
 
     // Render close confirmation dialog on top of everything if active

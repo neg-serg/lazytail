@@ -238,6 +238,33 @@ lazytail init
 
 Config is discovered by walking parent directories from CWD. Use `lazytail config show` to see the effective configuration, or `lazytail config validate` to check for errors.
 
+#### Key bindings
+
+Every rebindable chord can be overridden per config file. A list replaces the
+built-in chords for that action, and an empty list unbinds it. Project config
+wins over the global one, and unknown action names are rejected at startup
+(`lazytail config validate` reports them, together with chords bound twice):
+
+```yaml
+keys:
+  follow: ["f", "F"]      # tail -f / less style
+  page_down: ["ctrl+d"]   # half-page instead of a full screen
+  close_tab: []           # unbind `x` entirely
+```
+
+Rebindable actions: `quit`, `scroll_down`, `scroll_up`, `viewport_down`,
+`viewport_up`, `page_down`, `page_up`, `jump_start`, `jump_end`, `follow`,
+`filter`, `line_jump`, `help`, `z_mode`, `toggle_line`, `collapse_all`, `raw`,
+`timestamps`, `wrap`, `copy_line`, `close_tab`, `refresh`, `clear_filter`,
+`source_panel`, `tab_1` … `tab_9`, `z_center`/`z_top`/`z_bottom`/`z_cancel`
+(after `z`), and `panel_up`, `panel_down`, `panel_toggle`, `panel_select`,
+`panel_close`, `panel_copy_path`, `panel_unfocus` for the source panel.
+
+Chord syntax: `j`, `G`, `ctrl+d`, `C-d`, `alt+x`, `m-x`, `ctrl+alt+k`, `space`,
+`tab`, `enter`, `esc`, `backspace`, `delete`, `up`/`down`/`left`/`right`,
+`home`, `end`, `pageup`, `pagedown`, `f1`…`f24`. The `?` help overlay renders
+the live chords, so it always matches the effective keymap.
+
 ### Source Discovery Mode
 
 Run `lazytail` with no arguments to auto-discover log sources:

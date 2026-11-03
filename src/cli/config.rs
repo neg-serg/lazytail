@@ -55,6 +55,21 @@ pub fn validate() -> Result<(), i32> {
                     }
                 }
             }
+            // Validate key bindings: unknown actions, unparsable chords and
+            // chords bound to two different actions.
+            if let Some(keys) = &cfg.keys {
+                match crate::keymap::Keymap::build(keys) {
+                    Ok(map) => {
+                        for note in map.conflicts() {
+                            eprintln!("warning: {note}");
+                        }
+                    }
+                    Err(err) => {
+                        eprintln!("error: keys: {err}");
+                        has_errors = true;
+                    }
+                }
+            }
             if has_errors {
                 Err(1)
             } else {
@@ -117,6 +132,25 @@ fn show_config(cfg: &config::SingleFileConfig) {
         println!("{}: {}", "name".cyan(), name.green());
     } else {
         println!("{}: {}", "name".cyan(), "(not set)".dimmed());
+    }
+
+    // Key binding overrides
+    match &cfg.keys {
+        Some(keys) if !keys.is_empty() => {
+            println!();
+            println!("{}:", "keys".cyan());
+            let mut names: Vec<&String> = keys.keys().collect();
+            names.sort();
+            for name in names {
+                let chords = &keys[name];
+                if chords.is_empty() {
+                    println!("  {}: {}", name.green(), "(unbound)".dimmed());
+                } else {
+                    println!("  {}: {}", name.green(), chords.join(", "));
+                }
+            }
+        }
+        _ => {}
     }
 
     // Sources (single list - closest config wins, no merge)

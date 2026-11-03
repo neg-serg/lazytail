@@ -1,5 +1,6 @@
 use crate::app::AppEvent;
 use crate::app::{App, InputMode};
+use crate::keymap::{Action, BindMode};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 /// Handle keyboard input and return corresponding events
@@ -18,8 +19,8 @@ pub fn handle_input_event(key: KeyEvent, app: &App) -> Vec<AppEvent> {
     match app.input.mode {
         InputMode::EnteringFilter => handle_filter_input_mode(key),
         InputMode::EnteringLineJump => handle_line_jump_input_mode(key),
-        InputMode::ZPending => handle_z_pending_mode(key),
-        InputMode::SourcePanel => handle_source_panel_mode(key),
+        InputMode::ZPending => handle_z_pending_mode(key, app),
+        InputMode::SourcePanel => handle_source_panel_mode(key, app),
         InputMode::ConfirmClose => handle_confirm_close_mode(key),
         InputMode::Normal => handle_normal_mode(key, app),
     }
@@ -96,36 +97,22 @@ fn handle_line_jump_input_mode(key: KeyEvent) -> Vec<AppEvent> {
 }
 
 /// Handle keyboard input in z pending mode (waiting for zz, zt, zb)
-fn handle_z_pending_mode(key: KeyEvent) -> Vec<AppEvent> {
-    match key.code {
-        KeyCode::Char('z') => vec![AppEvent::CenterView, AppEvent::ExitZMode],
-        KeyCode::Char('t') => vec![AppEvent::ViewToTop, AppEvent::ExitZMode],
-        KeyCode::Char('b') => vec![AppEvent::ViewToBottom, AppEvent::ExitZMode],
-        KeyCode::Esc => vec![AppEvent::ExitZMode],
+fn handle_z_pending_mode(key: KeyEvent, app: &App) -> Vec<AppEvent> {
+    match app
+        .keymap
+        .resolve(BindMode::ZPending, key.code, key.modifiers)
+    {
+        Some(action) => action_events(action, app),
         // Any other key cancels z mode
-        _ => vec![AppEvent::ExitZMode],
+        None => vec![AppEvent::ExitZMode],
     }
 }
 
 /// Handle keyboard input in source panel focus mode
-fn handle_source_panel_mode(key: KeyEvent) -> Vec<AppEvent> {
-    match key.code {
-        KeyCode::Esc | KeyCode::Tab => vec![AppEvent::UnfocusSourcePanel],
-        KeyCode::Up | KeyCode::Char('k') => vec![AppEvent::SourcePanelUp],
-        KeyCode::Down | KeyCode::Char('j') => vec![AppEvent::SourcePanelDown],
-        KeyCode::Char(' ') => vec![AppEvent::ToggleCategoryExpand],
-        KeyCode::Enter => vec![AppEvent::SelectSource],
-        KeyCode::Char('x') => vec![AppEvent::CloseSelectedTab],
-        KeyCode::Char('w') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            vec![AppEvent::CloseSelectedTab]
-        }
-        KeyCode::Char('q') => vec![AppEvent::Quit],
-        KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            vec![AppEvent::Quit]
-        }
-        KeyCode::Char('y') => vec![AppEvent::CopySourcePath],
-        KeyCode::Char('?') => vec![AppEvent::ShowHelp],
-        _ => vec![],
+fn handle_source_panel_mode(key: KeyEvent, app: &App) -> Vec<AppEvent> {
+    match app.keymap.resolve(BindMode::Panel, key.code, key.modifiers) {
+        Some(action) => action_events(action, app),
+        None => vec![],
     }
 }
 
@@ -172,61 +159,68 @@ fn handle_normal_mode(key: KeyEvent, app: &App) -> Vec<AppEvent> {
         return handle_aggregation_mode(key);
     }
 
-    match key.code {
-        KeyCode::Char('q') => vec![AppEvent::Quit],
-        KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            vec![AppEvent::Quit]
+    match app
+        .keymap
+        .resolve(BindMode::Normal, key.code, key.modifiers)
+    {
+        Some(action) => action_events(action, app),
+        None => vec![],
+    }
+}
+
+/// Translate a bound action into the application events it triggers.
+///
+/// This is the single place where chord semantics live; `input.rs` no longer
+/// matches on `KeyCode` for the rebindable modes.
+fn action_events(action: Action, app: &App) -> Vec<AppEvent> {
+    match action {
+        Action::Quit => vec![AppEvent::Quit],
+        Action::ScrollDown => vec![AppEvent::ScrollDown, AppEvent::DisableFollowMode],
+        Action::ScrollUp => vec![AppEvent::ScrollUp, AppEvent::DisableFollowMode],
+        Action::ViewportDown => vec![AppEvent::ViewportDown, AppEvent::DisableFollowMode],
+        Action::ViewportUp => vec![AppEvent::ViewportUp, AppEvent::DisableFollowMode],
+        // The page size is appended by `collect_input_events` (needs the
+        // terminal height), exactly as before.
+        Action::PageDown => vec![AppEvent::DisableFollowMode],
+        Action::PageUp => vec![AppEvent::DisableFollowMode],
+        Action::HalfPageDown => vec![AppEvent::DisableFollowMode],
+        Action::HalfPageUp => vec![AppEvent::DisableFollowMode],
+        Action::JumpToStart => vec![AppEvent::JumpToStart, AppEvent::DisableFollowMode],
+        Action::JumpToEnd => vec![AppEvent::JumpToEnd, AppEvent::DisableFollowMode],
+        Action::ToggleFollow => vec![AppEvent::ToggleFollowMode],
+        Action::StartFilter => vec![AppEvent::StartFilterInput],
+        Action::StartLineJump => vec![AppEvent::StartLineJumpInput],
+        Action::ShowHelp => vec![AppEvent::ShowHelp],
+        Action::EnterZMode => vec![AppEvent::EnterZMode],
+        Action::ToggleLineExpansion => vec![AppEvent::ToggleLineExpansion],
+        Action::CollapseAll => vec![AppEvent::CollapseAll],
+        Action::ToggleRaw => vec![AppEvent::ToggleRawMode],
+        Action::ToggleTimestamps => vec![AppEvent::ToggleTimestamps],
+        Action::ToggleWrap => vec![AppEvent::ToggleLineWrap],
+        Action::CopyLine => vec![AppEvent::CopySelectedLine],
+        Action::CloseTab => vec![AppEvent::CloseCurrentTab],
+        Action::RefreshCombined => {
+            if app.active_tab().is_combined {
+                vec![AppEvent::RefreshCombinedView]
+            } else {
+                vec![]
+            }
         }
-        // Ctrl+E - scroll viewport down (vim style)
-        KeyCode::Char('e') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            vec![AppEvent::ViewportDown, AppEvent::DisableFollowMode]
-        }
-        // Ctrl+Y - scroll viewport up (vim style)
-        KeyCode::Char('y') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            vec![AppEvent::ViewportUp, AppEvent::DisableFollowMode]
-        }
-        KeyCode::Down | KeyCode::Char('j') => {
-            vec![AppEvent::ScrollDown, AppEvent::DisableFollowMode]
-        }
-        KeyCode::Up | KeyCode::Char('k') => vec![AppEvent::ScrollUp, AppEvent::DisableFollowMode],
-        KeyCode::PageDown => {
-            // Page size will be set by caller based on terminal size
-            vec![AppEvent::DisableFollowMode]
-        }
-        KeyCode::PageUp => {
-            // Page size will be set by caller based on terminal size
-            vec![AppEvent::DisableFollowMode]
-        }
-        KeyCode::Char('g') => vec![AppEvent::JumpToStart, AppEvent::DisableFollowMode],
-        KeyCode::Char('G') => vec![AppEvent::JumpToEnd, AppEvent::DisableFollowMode],
-        KeyCode::Char('f') => vec![AppEvent::ToggleFollowMode],
-        KeyCode::Char('/') => vec![AppEvent::StartFilterInput],
-        KeyCode::Char(':') => vec![AppEvent::StartLineJumpInput],
-        KeyCode::Char('?') => vec![AppEvent::ShowHelp],
-        KeyCode::Char('z') => vec![AppEvent::EnterZMode],
-        KeyCode::Char(' ') => vec![AppEvent::ToggleLineExpansion],
-        KeyCode::Char('c') => vec![AppEvent::CollapseAll],
-        KeyCode::Char('r') => vec![AppEvent::ToggleRawMode],
-        KeyCode::Char('t') => vec![AppEvent::ToggleTimestamps],
-        KeyCode::Char('w') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            vec![AppEvent::CloseCurrentTab]
-        }
-        KeyCode::Char('w') => vec![AppEvent::ToggleLineWrap],
-        KeyCode::Char('y') => vec![AppEvent::CopySelectedLine],
-        KeyCode::Char('R') if app.active_tab().is_combined => {
-            vec![AppEvent::RefreshCombinedView]
-        }
-        KeyCode::Esc => vec![AppEvent::ClearFilter],
-        // Tab toggles source panel focus
-        KeyCode::Tab => vec![AppEvent::FocusSourcePanel],
-        // Direct tab selection (1-9)
-        KeyCode::Char(c @ '1'..='9') => {
-            let index = (c as usize) - ('1' as usize);
-            vec![AppEvent::SelectTab(index)]
-        }
-        // Close current tab
-        KeyCode::Char('x') => vec![AppEvent::CloseCurrentTab],
-        _ => vec![],
+        Action::ClearFilter => vec![AppEvent::ClearFilter],
+        Action::FocusSourcePanel => vec![AppEvent::FocusSourcePanel],
+        // Config names tabs 1-based (`tab_1`); AppEvent wants a 0-based index.
+        Action::SelectTab(index) => vec![AppEvent::SelectTab(index.saturating_sub(1) as usize)],
+        Action::ZCenter => vec![AppEvent::CenterView, AppEvent::ExitZMode],
+        Action::ZTop => vec![AppEvent::ViewToTop, AppEvent::ExitZMode],
+        Action::ZBottom => vec![AppEvent::ViewToBottom, AppEvent::ExitZMode],
+        Action::ZCancel => vec![AppEvent::ExitZMode],
+        Action::PanelUp => vec![AppEvent::SourcePanelUp],
+        Action::PanelDown => vec![AppEvent::SourcePanelDown],
+        Action::PanelToggleExpand => vec![AppEvent::ToggleCategoryExpand],
+        Action::PanelSelect => vec![AppEvent::SelectSource],
+        Action::PanelCloseTab => vec![AppEvent::CloseSelectedTab],
+        Action::PanelCopyPath => vec![AppEvent::CopySourcePath],
+        Action::PanelUnfocus => vec![AppEvent::UnfocusSourcePanel],
     }
 }
 
@@ -245,6 +239,57 @@ mod tests {
         file.flush().unwrap();
         let app = App::new(vec![file.path().to_path_buf()], false).unwrap();
         (app, file)
+    }
+
+    #[test]
+    fn test_follow_is_bound_to_f_and_capital_f() {
+        let (app, _file) = create_test_app();
+        for key in ['f', 'F'] {
+            let events =
+                handle_input_event(KeyEvent::new(KeyCode::Char(key), KeyModifiers::NONE), &app);
+            assert_eq!(events, vec![AppEvent::ToggleFollowMode], "key {key}");
+        }
+    }
+
+    #[test]
+    fn test_keymap_override_moves_follow_to_capital_f_only() {
+        let (mut app, _file) = create_test_app();
+        let mut overrides = std::collections::HashMap::new();
+        overrides.insert("follow".to_string(), vec!["F".to_string()]);
+        app.keymap = crate::keymap::Keymap::build(&overrides).unwrap();
+
+        assert_eq!(
+            handle_input_event(KeyEvent::new(KeyCode::Char('f'), KeyModifiers::NONE), &app),
+            vec![]
+        );
+        assert_eq!(
+            handle_input_event(KeyEvent::new(KeyCode::Char('F'), KeyModifiers::NONE), &app),
+            vec![AppEvent::ToggleFollowMode]
+        );
+    }
+
+    #[test]
+    fn test_keymap_empty_list_unbinds_close_tab() {
+        let (mut app, _file) = create_test_app();
+        let mut overrides = std::collections::HashMap::new();
+        overrides.insert("close_tab".to_string(), Vec::new());
+        app.keymap = crate::keymap::Keymap::build(&overrides).unwrap();
+
+        assert_eq!(
+            handle_input_event(KeyEvent::new(KeyCode::Char('x'), KeyModifiers::NONE), &app),
+            vec![]
+        );
+    }
+
+    #[test]
+    fn test_keymap_page_down_via_ctrl_f() {
+        let (app, _file) = create_test_app();
+        let events = handle_input_event(
+            KeyEvent::new(KeyCode::Char('f'), KeyModifiers::CONTROL),
+            &app,
+        );
+        // Page size is appended by the event loop, which knows the terminal size.
+        assert_eq!(events, vec![AppEvent::DisableFollowMode]);
     }
 
     #[test]

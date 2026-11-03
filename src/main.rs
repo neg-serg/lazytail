@@ -7,6 +7,7 @@ mod filter;
 mod filter_orchestrator;
 mod handlers;
 mod history;
+mod keymap;
 mod log_source;
 #[cfg(feature = "mcp")]
 mod mcp;
@@ -31,7 +32,7 @@ use anyhow::{Context, Result};
 use app::{App, AppEvent, FilterState, SourceType, StreamMessage, TabState, ViewMode};
 use clap::Parser;
 use crossterm::{
-    event::{self as crossterm_event, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{self as crossterm_event, DisableMouseCapture, EnableMouseCapture, Event},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -337,6 +338,7 @@ fn main() -> Result<()> {
     let mut app = App::with_tabs(tabs, preset_registry);
     app.startup_time = Some(startup);
     app.verbose = verbose;
+    install_keymap(&mut app, &cfg, &mut config_errors);
     app.theme = cfg.theme;
     app.tab_mgr.ensure_combined_tabs();
 
@@ -459,6 +461,7 @@ fn run_discovery_mode(
     let mut app = App::with_tabs(tabs, preset_registry);
     app.startup_time = Some(startup);
     app.verbose = verbose;
+    install_keymap(&mut app, &cfg, &mut config_errors);
     app.theme = cfg.theme;
     app.source_renderer_map = source_renderer_map;
     app.tab_mgr.ensure_combined_tabs();
@@ -1040,6 +1043,36 @@ fn collect_stream_events(app: &mut App) -> bool {
 
 /// Collect input events from keyboard and mouse
 /// Coalesces mouse scroll events to prevent input lag while keeping key events responsive
+/// Build the keymap from config, reporting bad actions/chords and conflicts.
+fn install_keymap(app: &mut App, cfg: &config::Config, config_errors: &mut Vec<String>) {
+    let overrides = cfg.keys.clone().unwrap_or_default();
+    match keymap::Keymap::build(&overrides) {
+        Ok(built) => {
+            for note in built.conflicts() {
+                config_errors.push(format!("keys: {note}"));
+            }
+            if app.verbose {
+                for action in [
+                    keymap::Action::ToggleFollow,
+                    keymap::Action::StartFilter,
+                    keymap::Action::PageDown,
+                    keymap::Action::CloseTab,
+                ] {
+                    eprintln!(
+                        "[startup]   keys: {} = {}",
+                        action.name(),
+                        built
+                            .chords_for(keymap::BindMode::Normal, action)
+                            .join(" / ")
+                    );
+                }
+            }
+            app.keymap = built;
+        }
+        Err(err) => config_errors.push(format!("keys: {err}")),
+    }
+}
+
 fn collect_input_events<B: ratatui::backend::Backend>(
     terminal: &mut Terminal<B>,
     app: &App,
@@ -1067,13 +1100,30 @@ fn collect_input_events<B: ratatui::backend::Backend>(
         Event::Key(key) => {
             events.extend(handlers::input::handle_input_event(key, app));
 
-            // Add page size for PageDown/PageUp
-            if matches!(key.code, KeyCode::PageDown) {
-                let page_size = terminal.size()?.height as usize - PAGE_SIZE_OFFSET;
-                events.push(AppEvent::PageDown(page_size));
-            } else if matches!(key.code, KeyCode::PageUp) {
-                let page_size = terminal.size()?.height as usize - PAGE_SIZE_OFFSET;
-                events.push(AppEvent::PageUp(page_size));
+            // Add page size for the actions bound to page_down/page_up so a
+            // rebind (ctrl+f/ctrl+b, …) keeps paging working.
+            match app
+                .keymap
+                .resolve(keymap::BindMode::Normal, key.code, key.modifiers)
+            {
+                Some(keymap::Action::PageDown) => {
+                    let page_size = terminal.size()?.height as usize - PAGE_SIZE_OFFSET;
+                    events.push(AppEvent::PageDown(page_size));
+                }
+                Some(keymap::Action::PageUp) => {
+                    let page_size = terminal.size()?.height as usize - PAGE_SIZE_OFFSET;
+                    events.push(AppEvent::PageUp(page_size));
+                }
+                // Half a screen, vim/less `ctrl+d` / `ctrl+u`.
+                Some(keymap::Action::HalfPageDown) => {
+                    let half = (terminal.size()?.height as usize - PAGE_SIZE_OFFSET) / 2;
+                    events.push(AppEvent::PageDown(half.max(1)));
+                }
+                Some(keymap::Action::HalfPageUp) => {
+                    let half = (terminal.size()?.height as usize - PAGE_SIZE_OFFSET) / 2;
+                    events.push(AppEvent::PageUp(half.max(1)));
+                }
+                _ => {}
             }
 
             // For key events, return immediately to allow state changes

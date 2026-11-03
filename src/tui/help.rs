@@ -1,4 +1,5 @@
 use crate::app::App;
+use crate::keymap::{Action, BindMode, Keymap};
 use crate::source::SourceStatus;
 use crate::theme::UiColors;
 use ratatui::{
@@ -13,7 +14,52 @@ use ratatui::{
 const HELP_POPUP_WIDTH_PERCENT: f32 = 0.6;
 const HELP_POPUP_HEIGHT_PERCENT: f32 = 0.8;
 
-pub(super) fn render_help_overlay(f: &mut Frame, area: Rect, scroll_offset: usize, ui: &UiColors) {
+/// Render the chords bound to an action as `a / b / c`, or `—` when unbound.
+fn chords(keymap: &Keymap, mode: BindMode, action: Action) -> String {
+    let list = keymap.chords_for(mode, action);
+    if list.is_empty() {
+        "—".to_string()
+    } else {
+        list.join(" / ")
+    }
+}
+
+/// One help row: chords in a fixed column, then the description.
+fn row(keymap: &Keymap, mode: BindMode, action: Action, description: &str) -> Line<'static> {
+    Line::from(format!(
+        "  {:<16}{}",
+        chords(keymap, mode, action),
+        description
+    ))
+}
+
+/// The `1`-`9` tab shortcuts stay a range: every tab action shares the row.
+fn line_tabs(_keymap: &Keymap) -> Line<'static> {
+    Line::from("  1-9             Jump to tab")
+}
+
+/// One help row for several actions that share a description.
+fn row_multi(
+    keymap: &Keymap,
+    mode: BindMode,
+    actions: &[Action],
+    description: &str,
+) -> Line<'static> {
+    let joined = actions
+        .iter()
+        .map(|action| chords(keymap, mode, *action))
+        .collect::<Vec<_>>()
+        .join(" / ");
+    Line::from(format!("  {joined:<16}{description}"))
+}
+
+pub(super) fn render_help_overlay(
+    f: &mut Frame,
+    area: Rect,
+    scroll_offset: usize,
+    ui: &UiColors,
+    keymap: &Keymap,
+) {
     // Calculate centered popup area
     let popup_width = (area.width as f32 * HELP_POPUP_WIDTH_PERCENT) as u16;
     let popup_height = (area.height as f32 * HELP_POPUP_HEIGHT_PERCENT) as u16;
@@ -27,7 +73,9 @@ pub(super) fn render_help_overlay(f: &mut Frame, area: Rect, scroll_offset: usiz
         height: popup_height,
     };
 
-    // Help content
+    // Help content. Chords come from the live keymap, so a rebind is
+    // reflected here immediately; everything that is not rebindable
+    // (input-mode keys, mouse) stays static.
     let help_lines = vec![
         Line::from(vec![Span::styled(
             "LazyTail - Quick Reference",
@@ -38,55 +86,172 @@ pub(super) fn render_help_overlay(f: &mut Frame, area: Rect, scroll_offset: usiz
             "Navigation",
             Style::default().fg(ui.accent).add_modifier(Modifier::BOLD),
         )]),
-        Line::from("  j/k, ↑/↓      Move selection up/down"),
-        Line::from("  g / G         Jump to start / end"),
-        Line::from("  PageUp/Down   Scroll by page"),
-        Line::from("  Ctrl+E/Y      Scroll viewport (vim-style)"),
-        Line::from("  :123          Jump to line number"),
-        Line::from("  zz/zt/zb      Center/top/bottom view"),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::ScrollDown,
+            "Move selection down",
+        ),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::ScrollUp,
+            "Move selection up",
+        ),
+        row_multi(
+            keymap,
+            BindMode::Normal,
+            &[Action::JumpToStart, Action::JumpToEnd],
+            "Jump to start / end",
+        ),
+        row_multi(
+            keymap,
+            BindMode::Normal,
+            &[Action::PageDown, Action::PageUp],
+            "Scroll by page",
+        ),
+        row_multi(
+            keymap,
+            BindMode::Normal,
+            &[Action::ViewportDown, Action::ViewportUp],
+            "Scroll viewport (vim-style)",
+        ),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::StartLineJump,
+            "Jump to line number",
+        ),
+        Line::from("  zz/zt/zb        Center/top/bottom view"),
         Line::from(""),
         Line::from(vec![Span::styled(
             "Filtering",
             Style::default().fg(ui.accent).add_modifier(Modifier::BOLD),
         )]),
-        Line::from("  /             Start filter (live preview)"),
-        Line::from("  Tab           Cycle Plain → Regex → Query"),
-        Line::from("  Alt+C         Toggle case sensitivity"),
-        Line::from("  ↑/↓           Browse filter history"),
-        Line::from("  Enter         Apply filter"),
-        Line::from("  Esc           Clear filter"),
-        Line::from("  Query mode    json | ... / logfmt | ..."),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::StartFilter,
+            "Start filter (live preview)",
+        ),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::ClearFilter,
+            "Clear filter",
+        ),
+        Line::from("  Tab             Cycle Plain → Regex → Query"),
+        Line::from("  Alt+C           Toggle case sensitivity"),
+        Line::from("  ↑/↓             Browse filter history"),
+        Line::from("  Enter           Apply filter"),
+        Line::from("  Query mode      json | ... / logfmt | ..."),
         Line::from(""),
         Line::from(vec![Span::styled(
             "Tabs",
             Style::default().fg(ui.accent).add_modifier(Modifier::BOLD),
         )]),
-        Line::from("  1-9           Jump to tab"),
-        Line::from("  x, Ctrl+W     Close tab"),
+        line_tabs(keymap),
+        row(keymap, BindMode::Normal, Action::CloseTab, "Close tab"),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::FocusSourcePanel,
+            "Toggle panel focus",
+        ),
         Line::from(""),
         Line::from(vec![Span::styled(
             "Source Panel",
             Style::default().fg(ui.accent).add_modifier(Modifier::BOLD),
         )]),
-        Line::from("  Tab           Toggle panel focus"),
-        Line::from("  j/k, ↑/↓      Navigate tree"),
-        Line::from("  Space         Expand/collapse category"),
-        Line::from("  Enter         Select source"),
-        Line::from("  x             Close selected source"),
-        Line::from("  y             Copy source path"),
-        Line::from("  Esc           Return to log view"),
+        row_multi(
+            keymap,
+            BindMode::Panel,
+            &[Action::PanelDown, Action::PanelUp],
+            "Navigate tree",
+        ),
+        row(
+            keymap,
+            BindMode::Panel,
+            Action::PanelToggleExpand,
+            "Expand/collapse category",
+        ),
+        row(
+            keymap,
+            BindMode::Panel,
+            Action::PanelSelect,
+            "Select source",
+        ),
+        row(
+            keymap,
+            BindMode::Panel,
+            Action::PanelCloseTab,
+            "Close selected source",
+        ),
+        row(
+            keymap,
+            BindMode::Panel,
+            Action::PanelCopyPath,
+            "Copy source path",
+        ),
+        row(
+            keymap,
+            BindMode::Panel,
+            Action::PanelUnfocus,
+            "Return to log view",
+        ),
         Line::from(""),
         Line::from(vec![Span::styled(
             "View",
             Style::default().fg(ui.accent).add_modifier(Modifier::BOLD),
         )]),
-        Line::from("  Space         Expand/collapse line"),
-        Line::from("  c             Collapse all"),
-        Line::from("  f             Toggle follow mode"),
-        Line::from("  r             Toggle raw mode"),
-        Line::from("  w             Toggle line wrap"),
-        Line::from("  t             Toggle timestamps"),
-        Line::from("  y             Copy line to clipboard"),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::ToggleLineExpansion,
+            "Expand/collapse line",
+        ),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::CollapseAll,
+            "Collapse all",
+        ),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::ToggleFollow,
+            "Toggle follow mode",
+        ),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::ToggleRaw,
+            "Toggle raw mode",
+        ),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::ToggleWrap,
+            "Toggle line wrap",
+        ),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::ToggleTimestamps,
+            "Toggle timestamps",
+        ),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::CopyLine,
+            "Copy line to clipboard",
+        ),
+        row(
+            keymap,
+            BindMode::Normal,
+            Action::ShowHelp,
+            "Toggle this help",
+        ),
         Line::from(""),
         Line::from(vec![Span::styled(
             "Mouse",
@@ -121,7 +286,7 @@ pub(super) fn render_help_overlay(f: &mut Frame, area: Rect, scroll_offset: usiz
             Span::raw("  Loading"),
         ]),
         Line::from(""),
-        Line::from("  q / Ctrl+C    Quit"),
+        row(keymap, BindMode::Normal, Action::Quit, "Quit"),
         Line::from(""),
         Line::from(vec![Span::styled(
             "j/k to scroll, any other key to close",

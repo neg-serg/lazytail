@@ -27,6 +27,12 @@ pub struct RawConfig {
     /// Theme configuration (name or custom struct).
     #[serde(default)]
     pub theme: Option<crate::theme::RawThemeConfig>,
+    /// Key binding overrides: action name -> list of chords.
+    ///
+    /// A list replaces the built-in chords for that action; an empty list
+    /// unbinds it. Unknown action names are rejected at startup.
+    #[serde(default)]
+    pub keys: Option<HashMap<String, Vec<String>>>,
 }
 
 /// Raw renderer definition from config file.
@@ -131,6 +137,8 @@ pub struct Config {
     pub renderers: Vec<RawRendererDef>,
     /// Resolved theme.
     pub theme: crate::theme::Theme,
+    /// Key binding overrides (action name -> chords); `None` keeps defaults.
+    pub keys: Option<HashMap<String, Vec<String>>>,
 }
 
 impl Config {
