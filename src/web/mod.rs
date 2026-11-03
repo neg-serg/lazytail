@@ -73,6 +73,7 @@ enum FilterStateView {
 
 #[derive(Serialize)]
 struct SeverityCountsView {
+    unknown: u32,
     trace: u32,
     debug: u32,
     info: u32,
@@ -386,4 +387,27 @@ fn build_initial_tabs(files: &[PathBuf], watch: bool, verbose: bool) -> Result<I
         project_data_dir,
         global_data_dir,
     ))
+}
+
+#[cfg(test)]
+mod severity_counts_tests {
+    use super::SeverityCountsView;
+
+    #[test]
+    fn unknown_severity_is_serialized() {
+        let view = SeverityCountsView {
+            unknown: 7,
+            trace: 1,
+            debug: 2,
+            info: 3,
+            warn: 4,
+            error: 5,
+            fatal: 6,
+        };
+        let json = serde_json::to_string(&view).expect("serialize severity counts");
+        assert!(
+            json.contains("\"unknown\":7"),
+            "missing unknown count: {json}"
+        );
+    }
 }

@@ -345,6 +345,7 @@ impl WebState {
                         }),
                     severity_counts: tab.source.index_reader.as_ref().and_then(|ir| {
                         ir.checkpoints().last().map(|cp| SeverityCountsView {
+                            unknown: cp.severity_counts.unknown,
                             trace: cp.severity_counts.trace,
                             debug: cp.severity_counts.debug,
                             info: cp.severity_counts.info,
