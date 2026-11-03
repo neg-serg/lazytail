@@ -1,8 +1,8 @@
 /// Sparse index entry - one per `interval` lines
 #[derive(Clone, Copy, Debug)]
 struct IndexEntry {
-    /// Line number (supports up to 4 billion lines)
-    line_number: u32,
+    /// Line number in the source file
+    line_number: u64,
     /// Byte offset in the file where this line starts
     byte_offset: u64,
 }
@@ -81,7 +81,7 @@ impl SparseIndex {
     /// Append a new index entry (called every `interval` lines during scanning)
     pub fn append(&mut self, line_number: usize, byte_offset: u64) {
         self.entries.push(IndexEntry {
-            line_number: line_number as u32,
+            line_number: line_number as u64,
             byte_offset,
         });
         self.last_indexed_offset = byte_offset;
@@ -268,6 +268,16 @@ mod tests {
         // Should use entry at line 550_000 (entry index 54)
         assert_eq!(offset, 55 * 100_000);
         assert_eq!(skip, 555_555 - 550_000);
+    }
+
+    #[test]
+    #[cfg(target_pointer_width = "64")]
+    fn test_line_number_beyond_u32_range() {
+        let mut index = SparseIndex::new(10_000);
+        let line = u32::MAX as usize + 10_000;
+        index.append(line, 42);
+
+        assert_eq!(index.last_indexed_line(), line);
     }
 
     #[test]
