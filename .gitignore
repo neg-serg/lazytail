@@ -1,4 +1,5 @@
 /target
+.cargo/
 CLAUDE.md
 AGENTS.md
 *.log
