@@ -157,7 +157,10 @@ pub fn load(discovery: &DiscoveryResult) -> Result<Config, ConfigError> {
 /// A project preset shadows a global one with the same name (the same
 /// "closest wins" rule the keys and the theme follow), and project presets stay
 /// first so `PresetRegistry::get_by_name` resolves the project definition.
-fn merge_renderers(global: Vec<RawRendererDef>, project: Vec<RawRendererDef>) -> Vec<RawRendererDef> {
+fn merge_renderers(
+    global: Vec<RawRendererDef>,
+    project: Vec<RawRendererDef>,
+) -> Vec<RawRendererDef> {
     if project.is_empty() || global.is_empty() {
         return if project.is_empty() { global } else { project };
     }

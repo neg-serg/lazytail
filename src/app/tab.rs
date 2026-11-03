@@ -14,7 +14,6 @@ use crate::watcher::FileWatcher;
 use anyhow::{Context, Result};
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::Read;
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
