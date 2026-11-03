@@ -249,9 +249,25 @@ pub(super) fn render_help_overlay(
         row(
             keymap,
             BindMode::Normal,
+            Action::RefreshCombined,
+            "Refresh combined view",
+        ),
+        row(
+            keymap,
+            BindMode::Normal,
             Action::ShowHelp,
             "Toggle this help",
         ),
+        Line::from(""),
+        Line::from(vec![Span::styled(
+            "Aggregation View",
+            Style::default().fg(ui.accent).add_modifier(Modifier::BOLD),
+        )]),
+        Line::from("  j/k, ↑/↓      Navigate groups"),
+        Line::from("  Enter         Drill down into group"),
+        Line::from("  Esc           Back to log view"),
+        Line::from("  g / G         Jump to first / last"),
+        Line::from("  /             Start filter"),
         Line::from(""),
         Line::from(vec![Span::styled(
             "Mouse",
